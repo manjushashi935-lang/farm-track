@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Farm Track Auth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #2e7d32, #66bb6a);
+    }
+
+    .container {
+      backdrop-filter: blur(15px);
+      background: rgba(255,255,255,0.2);
+      padding: 30px;
+      border-radius: 15px;
+      width: 320px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    .password-box {
+      position: relative;
+    }
+
+    .eye {
+      position: absolute;
+      right: 10px;
+      top: 12px;
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #1b5e20;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .toggle {
+      text-align: center;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    #msg {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .spinner {
+      display: none;
+      margin: auto;
+      border: 4px solid #fff;
+      border-top: 4px solid #1b5e20;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- REGISTER -->
+  <div id="registerBox">
+    <h2>Register 🌾</h2>
+    <input id="name" placeholder="Name">
+    <input id="email" placeholder="Email">
+
+    <div class="password-box">
+      <input id="password" type="password" placeholder="Password">
+      <span class="eye" onclick="togglePassword('password')">👁</span>
+    </div>
+
+    <button onclick="register()">Register</button>
+    <div class="toggle" onclick="showLogin()">Already have account? Login</div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginBox" class="hidden">
+    <h2>Login 🔐</h2>
+    <input id="login_email" placeholder="Email">
+
+    <div class="password-box">
+      <input id="login_password" type="password" placeholder="Password">
+      <span class="eye" onclick="togglePassword('login_password')">👁</span>
+    </div>
+
+    <button onclick="login()">Login</button>
+
+    <div class="toggle" onclick="showForgot()">Forgot Password?</div>
+    <div class="toggle" onclick="showRegister()">Create account</div>
+  </div>
+
+  <!-- FORGOT -->
+  <div id="forgotBox" class="hidden">
+    <h2>Reset Password 🔑</h2>
+    <input id="forgot_email" placeholder="Enter Email">
+    <button onclick="forgotPassword()">Send Reset</button>
+    <div class="toggle" onclick="showLogin()">Back to Login</div>
+  </div>
+
+  <div class="spinner" id="loader"></div>
+  <p id="msg"></p>
+
+</div>
+
+<script>
+const API = "http://localhost:5000";
+
+// Toggle views
+function showLogin() {
+  registerBox.classList.add("hidden");
+  forgotBox.classList.add("hidden");
+  loginBox.classList.remove("hidden");
+}
+
+function showRegister() {
+  loginBox.classList.add("hidden");
+  forgotBox.classList.add("hidden");
+  registerBox.classList.remove("hidden");
+}
+
+function showForgot() {
+  loginBox.classList.add("hidden");
+  forgotBox.classList.remove("hidden");
+}
+
+// Toggle password
+function togglePassword(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+// Loader
+function showLoader(show) {
+  loader.style.display = show ? "block" : "none";
+}
+
+// Register
+function register() {
+  showLoader(true);
+
+  fetch(API + "/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: name.value,
+      email: email.value,
+      password: password.value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    msg.innerText = data.message;
+    showLoader(false);
+  });
+}
+
+// Login
+function login() {
+  showLoader(true);
+
+  fetch(API + "/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      email: login_email.value,
+      password: login_password.value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    showLoader(false);
+    msg.innerText = data.message;
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      window.location.href = "index.html";
+    }
+  });
+}
+
+// Forgot password (UI only)
+function forgotPassword() {
+  msg.innerText = "Reset link feature coming soon 🔑";
+}
+</script>
+
+</body>
+</html>
