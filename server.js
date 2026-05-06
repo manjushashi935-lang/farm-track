@@ -70,7 +70,7 @@ function verifyToken(req, res, next) {
   try {
 
     const verified =
-      jwt.verify(token, process.env.JWT_SECRET);
+      jwt.verify(token, "farmtracksupersecret123");
 
     req.user = verified;
 
@@ -175,19 +175,19 @@ app.post("/login", (req, res) => {
       });
     }
 
-    const token = jwt.sign(
+   const token = jwt.sign(
 
-      {
-        id: user.id,
-        email: user.email
-      },
+  {
+    id: user.id,
+    email: user.email
+  },
 
-      process.env.JWT_SECRET,
+  "farmtracksupersecret123",
 
-      {
-        expiresIn: "7d"
-      }
-    );
+  {
+    expiresIn: "7d"
+  }
+);
 
     res.json({
 
