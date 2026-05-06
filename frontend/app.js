@@ -500,10 +500,11 @@ function deleteCrop(id) {
 }
 
 // ================= PROFIT =================
+function getProfit(id = null) {
 
-function getProfit(id) {
+  const cropId = id || profit_id.value;
 
-  fetch(API + "/profit/" + id, {
+  fetch(API + "/profit/" + cropId, {
 
     headers: {
       "Authorization": "Bearer " + token
@@ -517,11 +518,33 @@ function getProfit(id) {
 
     console.log(data);
 
-    result.innerText =
+    result.innerHTML = `
 
-      `Income: ₹${data.total_income}
-Expense: ₹${data.total_expense}
-Profit: ₹${data.profit}`;
+      <div style="
+        padding:15px;
+        background:#f5f5f5;
+        border-radius:10px;
+        margin-top:10px;
+      ">
+
+        <h3>📊 Profit Report</h3>
+
+        <p>💰 Total Income:
+          <b>₹${data.total_income || 0}</b>
+        </p>
+
+        <p>💸 Total Expense:
+          <b>₹${data.total_expense || 0}</b>
+        </p>
+
+        <p>📈 Net Profit:
+          <b style="color:green;">
+            ₹${data.profit || 0}
+          </b>
+        </p>
+
+      </div>
+    `;
 
   })
 
@@ -529,11 +552,11 @@ Profit: ₹${data.profit}`;
 
     console.log(err);
 
-    result.innerText = "Profit Failed ❌";
+    result.innerHTML =
+      "Profit calculation failed ❌";
 
   });
 }
-
 // ================= PROFIT CHART =================
 
 function loadChart(id) {

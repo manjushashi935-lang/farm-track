@@ -379,7 +379,6 @@ app.post("/add-income", verifyToken, (req, res) => {
 });
 
 // ================= PROFIT =================
-
 app.get("/profit/:crop_id", verifyToken, (req, res) => {
 
   const cropId = req.params.crop_id;
@@ -419,10 +418,10 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
       }
 
       const totalIncome =
-        incomeResult[0].totalIncome || 0;
+        Number(incomeResult[0].totalIncome || 0);
 
       const totalExpense =
-        expenseResult[0].totalExpense || 0;
+        Number(expenseResult[0].totalExpense || 0);
 
       const profit =
         totalIncome - totalExpense;
@@ -433,7 +432,7 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
 
         total_expense: totalExpense,
 
-        profit
+        profit: profit
 
       });
 
