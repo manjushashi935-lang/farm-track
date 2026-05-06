@@ -140,9 +140,11 @@
 </div>
 
 <script>
-const API = "http://localhost:5000";
 
-// Toggle views
+const API = "https://farm-track-vm1g.onrender.com";
+
+// ================= TOGGLE VIEWS =================
+
 function showLogin() {
   registerBox.classList.add("hidden");
   forgotBox.classList.add("hidden");
@@ -157,68 +159,136 @@ function showRegister() {
 
 function showForgot() {
   loginBox.classList.add("hidden");
+  registerBox.classList.add("hidden");
   forgotBox.classList.remove("hidden");
 }
 
-// Toggle password
+// ================= PASSWORD TOGGLE =================
+
 function togglePassword(id) {
   const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
+
+  input.type =
+    input.type === "password"
+      ? "text"
+      : "password";
 }
 
-// Loader
+// ================= LOADER =================
+
 function showLoader(show) {
   loader.style.display = show ? "block" : "none";
 }
 
-// Register
+// ================= REGISTER =================
+
 function register() {
+
   showLoader(true);
 
   fetch(API + "/register", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: {
+      "Content-Type": "application/json"
+    },
+
     body: JSON.stringify({
       name: name.value,
       email: email.value,
       password: password.value
     })
   })
+
   .then(res => res.json())
+
   .then(data => {
+
     msg.innerText = data.message;
+
     showLoader(false);
+
+    if (data.message.includes("success")) {
+      showLogin();
+    }
+
+  })
+
+  .catch(() => {
+
+    showLoader(false);
+
+    msg.innerText = "Registration failed ❌";
   });
 }
 
-// Login
+// ================= LOGIN =================
+
 function login() {
+
   showLoader(true);
 
   fetch(API + "/login", {
+
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
     body: JSON.stringify({
       email: login_email.value,
       password: login_password.value
     })
+
   })
+
   .then(res => res.json())
+
   .then(data => {
+
     showLoader(false);
-    msg.innerText = data.message;
 
     if (data.token) {
+
+      // SAVE TOKEN
       localStorage.setItem("token", data.token);
+
+      // SAVE EMAIL
+      localStorage.setItem(
+        "email",
+        login_email.value
+      );
+
+      // REDIRECT
       window.location.href = "index.html";
+
+    } else {
+
+      msg.innerText = data.message || "Login failed ❌";
+
     }
+
+  })
+
+  .catch(() => {
+
+    showLoader(false);
+
+    msg.innerText = "Server error ❌";
+
   });
+
 }
 
-// Forgot password (UI only)
+// ================= FORGOT PASSWORD =================
+
 function forgotPassword() {
-  msg.innerText = "Reset link feature coming soon 🔑";
+
+  msg.innerText =
+    "Reset link feature coming soon 🔑";
+
 }
+
 </script>
 
 </body>
