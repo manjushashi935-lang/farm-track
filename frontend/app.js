@@ -172,8 +172,11 @@ function addCrop(btn) {
 }
 
 // ================= ADD EXPENSE =================
+function addExpense(btn) {
 
-function addExpense() {
+  if (btn) {
+    setLoading(btn, true);
+  }
 
   fetch(API + "/add-expense", {
 
@@ -185,10 +188,15 @@ function addExpense() {
     },
 
     body: JSON.stringify({
+
       crop_id: exp_crop_id.value,
+
       type: exp_type.value,
+
       amount: exp_amount.value,
+
       date: exp_date.value
+
     })
 
   })
@@ -197,14 +205,15 @@ function addExpense() {
 
   .then(data => {
 
-    console.log(data);
-
     notify(data.message || "Expense Added 💸");
 
     exp_crop_id.value = "";
     exp_type.value = "";
     exp_amount.value = "";
     exp_date.value = "";
+
+    // AUTO REFRESH HISTORY
+    loadExpenses();
 
   })
 
@@ -214,12 +223,22 @@ function addExpense() {
 
     notify("Expense Failed ❌", false);
 
+  })
+
+  .finally(() => {
+
+    if (btn) {
+      setLoading(btn, false);
+    }
+
   });
 }
-
 // ================= ADD INCOME =================
+function addIncome(btn) {
 
-function addIncome() {
+  if (btn) {
+    setLoading(btn, true);
+  }
 
   fetch(API + "/add-income", {
 
@@ -231,10 +250,15 @@ function addIncome() {
     },
 
     body: JSON.stringify({
+
       crop_id: inc_crop_id.value,
+
       quantity: quantity.value,
+
       price_per_unit: price.value,
+
       date: inc_date.value
+
     })
 
   })
@@ -243,14 +267,15 @@ function addIncome() {
 
   .then(data => {
 
-    console.log(data);
-
     notify(data.message || "Income Added 💰");
 
     inc_crop_id.value = "";
     quantity.value = "";
     price.value = "";
     inc_date.value = "";
+
+    // AUTO REFRESH HISTORY
+    loadIncome();
 
   })
 
@@ -260,9 +285,16 @@ function addIncome() {
 
     notify("Income Failed ❌", false);
 
+  })
+
+  .finally(() => {
+
+    if (btn) {
+      setLoading(btn, false);
+    }
+
   });
 }
-
 // ================= TABLE =================
 
 function displayTable() {
@@ -789,7 +821,6 @@ if (
   document.body.classList.add("dark");
 }
 // ================= LOAD EXPENSES =================
-
 function loadExpenses() {
 
   fetch(API + "/expenses", {
@@ -824,13 +855,13 @@ function loadExpenses() {
       return;
     }
 
-    data.forEach(exp => {
+    data.forEach((exp, index) => {
 
       body.innerHTML += `
 
         <tr>
 
-          <td>${exp.id}</td>
+          <td>${index + 1}</td>
 
           <td>${exp.crop_id}</td>
 
@@ -858,9 +889,7 @@ function loadExpenses() {
 
   });
 }
-
 // ================= LOAD INCOME =================
-
 function loadIncome() {
 
   fetch(API + "/income", {
@@ -895,13 +924,13 @@ function loadIncome() {
       return;
     }
 
-    data.forEach(inc => {
+    data.forEach((inc, index) => {
 
       body.innerHTML += `
 
         <tr>
 
-          <td>${inc.id}</td>
+          <td>${index + 1}</td>
 
           <td>${inc.crop_id}</td>
 
