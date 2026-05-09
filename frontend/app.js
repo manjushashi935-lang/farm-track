@@ -788,7 +788,149 @@ if (
 
   document.body.classList.add("dark");
 }
+// ================= LOAD EXPENSES =================
 
+function loadExpenses() {
+
+  fetch(API + "/expenses", {
+
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+
+  })
+
+  .then(res => res.json())
+
+  .then(data => {
+
+    const body =
+      document.getElementById("expenseBody");
+
+    if (!body) return;
+
+    body.innerHTML = "";
+
+    if (data.length === 0) {
+
+      body.innerHTML = `
+        <tr>
+          <td colspan="5">
+            No expenses found
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    data.forEach(exp => {
+
+      body.innerHTML += `
+
+        <tr>
+
+          <td>${exp.id}</td>
+
+          <td>${exp.crop_id}</td>
+
+          <td>${exp.type}</td>
+
+          <td>₹${exp.amount}</td>
+
+          <td>${exp.date}</td>
+
+        </tr>
+
+      `;
+    });
+
+  })
+
+  .catch(err => {
+
+    console.log(err);
+
+    notify(
+      "Failed to load expenses ❌",
+      false
+    );
+
+  });
+}
+
+// ================= LOAD INCOME =================
+
+function loadIncome() {
+
+  fetch(API + "/income", {
+
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+
+  })
+
+  .then(res => res.json())
+
+  .then(data => {
+
+    const body =
+      document.getElementById("incomeBody");
+
+    if (!body) return;
+
+    body.innerHTML = "";
+
+    if (data.length === 0) {
+
+      body.innerHTML = `
+        <tr>
+          <td colspan="6">
+            No income found
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    data.forEach(inc => {
+
+      body.innerHTML += `
+
+        <tr>
+
+          <td>${inc.id}</td>
+
+          <td>${inc.crop_id}</td>
+
+          <td>${inc.quantity}</td>
+
+          <td>₹${inc.price_per_unit}</td>
+
+          <td>₹${inc.total_amount}</td>
+
+          <td>${inc.date}</td>
+
+        </tr>
+
+      `;
+    });
+
+  })
+
+  .catch(err => {
+
+    console.log(err);
+
+    notify(
+      "Failed to load income ❌",
+      false
+    );
+
+  });
+}
 // ================= INIT =================
 
 loadCrops();

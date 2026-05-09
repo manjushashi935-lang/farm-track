@@ -1,4 +1,5 @@
 /* ================= RESET ================= */
+
 * {
   margin: 0;
   padding: 0;
@@ -7,66 +8,181 @@
 }
 
 /* ================= BODY ================= */
+
 body {
   background: #f5f7fb;
-  transition: background 0.3s, color 0.3s;
+  transition: 0.3s;
+  overflow: hidden;
 }
 
-/* ================= LAYOUT ================= */
+/* ================= APP LAYOUT ================= */
+
 .app {
   display: flex;
   height: 100vh;
 }
 
 /* ================= SIDEBAR ================= */
+
 .sidebar {
-  width: 220px;
-  background: #1e1e2f;
+  width: 240px;
+  background: linear-gradient(180deg, #1e1e2f, #121212);
   color: white;
   padding: 20px;
   display: flex;
   flex-direction: column;
+  transition: 0.3s;
+  overflow: hidden;
 }
 
 .sidebar h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  font-size: 24px;
 }
 
 .sidebar button {
   background: none;
-  color: white;
   border: none;
-  padding: 12px;
+  color: white;
+  padding: 14px;
   text-align: left;
   cursor: pointer;
-  transition: 0.2s;
+  border-radius: 10px;
+  transition: 0.3s;
+  margin-bottom: 8px;
+  font-size: 15px;
 }
 
 .sidebar button:hover {
-  background: #333;
+  background: rgba(255,255,255,0.1);
+  transform: translateX(5px);
+}
+
+/* COLLAPSED */
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed h2 {
+  display: none;
+}
+
+.sidebar.collapsed button {
+  text-align: center;
+  font-size: 20px;
 }
 
 /* ================= MAIN ================= */
+
 .main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ================= TOPBAR ================= */
+
 .topbar {
   background: white;
-  padding: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 15px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 10;
 }
 
-/* ================= CONTENT ================= */
+.topbar h3 {
+  font-size: 22px;
+}
+
+.top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ================= PROFILE ================= */
+
+.profile {
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.profile-menu {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background: white;
+  width: 180px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 12px;
+  animation: fadeIn 0.3s ease;
+  z-index: 999;
+}
+
+.profile-menu p {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.profile-menu button {
+  width: 100%;
+}
+
+/* ================= NOTIFICATION ================= */
+
+.notification-icon {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+#notificationContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.notification {
+  background: #2e7d32;
+  color: white;
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  animation: slideIn 0.4s ease;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.notification.error {
+  background: #c62828;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ================= MAIN CONTENT ================= */
+
 main {
   padding: 20px;
   overflow-y: auto;
 }
 
-/* ================= SECTIONS ================= */
+/* ================= SECTION ================= */
+
 section {
   display: none;
   opacity: 0;
@@ -81,41 +197,55 @@ section.active {
 }
 
 /* ================= CARD ================= */
+
 .card {
-  background: white;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
   padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  border-radius: 18px;
   margin-bottom: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
   transition: 0.3s;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+}
+
+.card h2 {
+  margin-bottom: 15px;
 }
 
 /* ================= INPUT ================= */
+
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin: 8px 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: 0.3s;
+}
+
+input:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
 }
 
 /* ================= BUTTON ================= */
+
 button {
-  padding: 10px 15px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 8px;
-  background: #2e7d32;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
   color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.3s;
 }
 
 button:hover {
-  background: #1b5e20;
   transform: scale(1.05);
 }
 
@@ -124,51 +254,63 @@ button:active {
 }
 
 /* ================= TABLE ================= */
+
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  margin-top: 15px;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 th {
   background: #2e7d32;
   color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+tr {
+  transition: 0.3s;
 }
 
 tr:hover {
   background: #f1f1f1;
 }
 
-tr {
-  animation: fadeIn 0.3s ease;
+/* ================= PAGINATION ================= */
+
+#pagination {
+  margin-top: 15px;
 }
 
-/* ================= PAGINATION ================= */
 #pagination button {
-  margin: 5px;
-  padding: 5px 10px;
+  margin-right: 5px;
 }
 
 /* ================= RESULT ================= */
+
 #result {
-  margin-top: 10px;
+  margin-top: 15px;
+  font-size: 18px;
   font-weight: bold;
   color: #1565c0;
 }
 
 /* ================= MODAL ================= */
+
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -177,9 +319,9 @@ tr {
 
 .modal-content {
   background: white;
+  width: 320px;
   padding: 20px;
-  border-radius: 10px;
-  width: 300px;
+  border-radius: 15px;
 }
 
 .hidden {
@@ -187,41 +329,73 @@ tr {
 }
 
 /* ================= ANIMATION ================= */
-.fade-in {
-  animation: fadeIn 0.5s ease-in;
-}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ================= SKELETON ================= */
+
 #skeleton {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .skeleton-row {
-  height: 40px;
-  background: linear-gradient(90deg, #eee, #ddd, #eee);
-  margin-bottom: 8px;
-  border-radius: 6px;
+  height: 45px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: linear-gradient(
+    90deg,
+    #eee,
+    #ddd,
+    #eee
+  );
+
+  background-size: 200px 100%;
   animation: shimmer 1.2s infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: 200px 0; }
+  from {
+    background-position: -200px 0;
+  }
+
+  to {
+    background-position: 200px 0;
+  }
+}
+
+/* ================= BUTTON SPINNER ================= */
+
+.spinner-btn {
+  border: 3px solid white;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ================= DARK MODE ================= */
+
 .dark {
   background: #121212;
-  color: #eee;
-}
-
-.dark .sidebar {
-  background: #111;
+  color: white;
 }
 
 .dark .topbar {
@@ -231,10 +405,11 @@ tr {
 
 .dark .card {
   background: #1e1e1e;
+  color: white;
 }
 
 .dark input {
-  background: #333;
+  background: #2a2a2a;
   color: white;
   border: 1px solid #555;
 }
@@ -243,16 +418,8 @@ tr {
   color: white;
 }
 
-.dark th {
-  background: #2e7d32;
-}
-
 .dark tr:hover {
   background: #2a2a2a;
-}
-
-.dark #result {
-  color: #90caf9;
 }
 
 .dark .modal-content {
@@ -260,102 +427,42 @@ tr {
   color: white;
 }
 
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100px;
-    font-size: 12px;
-  }
-
-  /* COLLAPSE SIDEBAR */
-.sidebar.collapsed {
-  width: 70px;
-}
-
-.sidebar.collapsed h2 {
-  display: none;
-}
-
-.sidebar.collapsed button {
-  text-align: center;
-  font-size: 18px;
-}
-
-/* adjust main */
-.main.full {
-  margin-left: 70px;
-}
-
-#notificationContainer {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 999;
-}
-
-.notification {
-  background: #2e7d32;
-  color: white;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  animation: slideIn 0.4s ease;
-}
-
-.notification.error {
-  background: #c62828;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.top-right {
-  margin-left: auto;
-  position: relative;
-}
-
-.profile {
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.profile-menu {
-  position: absolute;
-  right: 0;
-  top: 40px;
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.profile-menu button {
-  width: 100%;
-  margin-top: 5px;
-}
-
-.spinner-btn {
-  border: 3px solid #fff;
-  border-top: 3px solid transparent;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  animation: spin 0.6s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* dark mode */
 .dark .profile-menu {
   background: #1e1e1e;
   color: white;
 }
-  .sidebar button {
-    padding: 8px;
+
+.dark #result {
+  color: #90caf9;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+
+  .sidebar {
+    position: fixed;
+    z-index: 999;
+    height: 100%;
+    left: -240px;
   }
+
+  .sidebar.collapsed {
+    left: 0;
+    width: 220px;
+  }
+
+  .main {
+    width: 100%;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .topbar h3 {
+    font-size: 18px;
+  }
+
 }

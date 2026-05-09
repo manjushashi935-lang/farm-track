@@ -2,11 +2,11 @@
 <html>
 <head>
   <title>Farm Track Dashboard</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -16,6 +16,7 @@
 
   <!-- ================= SIDEBAR ================= -->
   <aside class="sidebar">
+
     <h2>🌾 FarmTrack</h2>
 
     <button onclick="show('dashboard')">📊 Dashboard</button>
@@ -28,40 +29,63 @@
 
     <button onclick="toggleDark()">🌙 Theme</button>
     <button onclick="logout()">🚪 Logout</button>
+
   </aside>
 
   <!-- ================= MAIN ================= -->
   <div class="main">
 
-    <!-- TOPBAR -->
+    <!-- ================= TOPBAR ================= -->
     <header class="topbar">
+
       <button onclick="toggleSidebar()">☰</button>
+
       <h3>📊 Farm Dashboard</h3>
 
-      <!-- PROFILE -->
       <div class="top-right">
-        <div class="profile" onclick="toggleProfileMenu()">👤</div>
+
+        <!-- NOTIFICATION -->
+        <div class="notification-icon">
+          🔔
+        </div>
+
+        <!-- PROFILE -->
+        <div class="profile" onclick="toggleProfileMenu()">
+          👤
+        </div>
 
         <div id="profileMenu" class="profile-menu hidden">
           <p id="userEmail">User</p>
           <button onclick="logout()">Logout</button>
         </div>
+
       </div>
+
     </header>
 
+    <!-- ================= MAIN CONTENT ================= -->
     <main>
 
       <!-- ================= DASHBOARD ================= -->
       <section id="dashboard" class="active">
 
+        <!-- CROPS -->
         <div class="card">
+
           <h2>🌾 Crops</h2>
 
-          <input id="searchInput" placeholder="🔍 Search crops..." onkeyup="searchCrops()">
+          <input
+            id="searchInput"
+            placeholder="🔍 Search crops..."
+            onkeyup="searchCrops()"
+          >
 
+          <!-- SKELETON -->
           <div id="skeleton"></div>
 
+          <!-- TABLE -->
           <table>
+
             <thead>
               <tr>
                 <th>ID</th>
@@ -70,102 +94,222 @@
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody id="cropBody"></tbody>
+
           </table>
 
+          <!-- PAGINATION -->
           <div id="pagination"></div>
+
         </div>
 
+        <!-- PROFIT CHART -->
         <div class="card">
+
           <h2>📊 Profit Overview</h2>
+
           <canvas id="profitChart"></canvas>
+
         </div>
 
+        <!-- MONTHLY CHART -->
         <div class="card">
+
           <h2>📈 Monthly Analytics</h2>
 
-          <input id="chart_crop_id" placeholder="Enter Crop ID">
-          <button onclick="loadMonthlyChart()">Load Analytics</button>
+          <input
+            id="chart_crop_id"
+            placeholder="Enter Crop ID"
+          >
+
+          <button onclick="loadMonthlyChart()">
+            Load Analytics
+          </button>
 
           <canvas id="monthlyChart"></canvas>
+
         </div>
 
       </section>
 
       <!-- ================= ADD CROP ================= -->
       <section id="crop">
+
         <div class="card">
+
           <h2>Add Crop 🌾</h2>
+
           <input id="crop_name" placeholder="Crop Name">
+
           <input id="land_area" placeholder="Land Area">
+
           <input id="season" placeholder="Season">
 
-          <button onclick="addCrop(this)" data-text="Add Crop">
+          <button
+            onclick="addCrop(this)"
+            data-text="Add Crop"
+          >
             Add Crop
           </button>
+
         </div>
+
       </section>
 
       <!-- ================= EXPENSE ================= -->
       <section id="expense">
-        <div class="card">
-          <h2>Add Expense 💸</h2>
-          <input id="exp_crop_id" placeholder="Crop ID">
-          <input id="exp_type" placeholder="Type">
-          <input id="exp_amount" placeholder="Amount">
-          <input id="exp_date" placeholder="YYYY-MM-DD">
 
-          <button onclick="addExpense(this)" data-text="Add Expense">
+        <div class="card">
+
+          <h2>Add Expense 💸</h2>
+
+          <input id="exp_crop_id" placeholder="Crop ID">
+
+          <input id="exp_type" placeholder="Type">
+
+          <input id="exp_amount" placeholder="Amount">
+
+          <input id="exp_date" type="date">
+
+          <button
+            onclick="addExpense(this)"
+            data-text="Add Expense"
+          >
             Add Expense
           </button>
+
         </div>
+
+        <!-- EXPENSE HISTORY -->
+        <div class="card">
+
+          <h2>💸 Expense History</h2>
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Crop ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody id="expenseBody"></tbody>
+
+          </table>
+
+        </div>
+
       </section>
 
       <!-- ================= INCOME ================= -->
       <section id="income">
-        <div class="card">
-          <h2>Add Income 💰</h2>
-          <input id="inc_crop_id" placeholder="Crop ID">
-          <input id="quantity" placeholder="Quantity">
-          <input id="price" placeholder="Price per unit">
-          <input id="inc_date" placeholder="YYYY-MM-DD">
 
-          <button onclick="addIncome(this)" data-text="Add Income">
+        <div class="card">
+
+          <h2>Add Income 💰</h2>
+
+          <input id="inc_crop_id" placeholder="Crop ID">
+
+          <input id="quantity" placeholder="Quantity">
+
+          <input id="price" placeholder="Price per unit">
+
+          <input id="inc_date" type="date">
+
+          <button
+            onclick="addIncome(this)"
+            data-text="Add Income"
+          >
             Add Income
           </button>
+
         </div>
+
+        <!-- INCOME HISTORY -->
+        <div class="card">
+
+          <h2>💰 Income History</h2>
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Crop ID</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody id="incomeBody"></tbody>
+
+          </table>
+
+        </div>
+
       </section>
 
       <!-- ================= PROFIT ================= -->
       <section id="profit">
+
         <div class="card">
+
           <h2>Check Profit 📊</h2>
+
           <input id="profit_id" placeholder="Crop ID">
-          <button onclick="getProfit()">Check</button>
+
+          <button onclick="getProfit(profit_id.value)">
+            Check
+          </button>
+
           <p id="result"></p>
+
         </div>
+
       </section>
 
     </main>
+
   </div>
 
 </div>
 
-<!-- ================= NOTIFICATIONS ================= -->
+<!-- ================= NOTIFICATION ================= -->
 <div id="notificationContainer"></div>
 
 <!-- ================= EDIT MODAL ================= -->
 <div id="editModal" class="modal hidden">
+
   <div class="modal-content">
+
     <h3>Edit Crop ✏️</h3>
 
     <input id="edit_name" placeholder="Crop Name">
+
     <input id="edit_area" placeholder="Land Area">
+
     <input id="edit_season" placeholder="Season">
 
-    <button onclick="saveEdit(this)" data-text="Save">Save</button>
-    <button onclick="closeModal()">Cancel</button>
+    <button
+      onclick="saveEdit(this)"
+      data-text="Save"
+    >
+      Save
+    </button>
+
+    <button onclick="closeModal()">
+      Cancel
+    </button>
+
   </div>
+
 </div>
 
 <script src="app.js"></script>
