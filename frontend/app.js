@@ -321,24 +321,22 @@ function displayTable() {
 
       <td>
 
-        <button onclick="getProfit(${crop.id})">
-          📊
-        </button>
+      <button onclick="getProfit(${crop.id})">
+  📊
+</button>
 
-        <button onclick="loadChart(${crop.id})">
-          📈
-        </button>
+<button onclick="loadChart(${crop.id})">
+  📈
+</button>
 
-        <button onclick="
-          openEditModal(
-            ${crop.id},
-            '${crop.crop_name}',
-            '${crop.land_area}',
-            '${crop.season}'
-          )
-        ">
-          ✏️
-        </button>
+<button onclick='openEditModal(
+  ${crop.id},
+  ${JSON.stringify(crop.crop_name)},
+  ${JSON.stringify(crop.land_area)},
+  ${JSON.stringify(crop.season)}
+)'>
+  ✏️
+</button>
 
         <button onclick="deleteCrop(${crop.id})">
           🗑️
@@ -390,15 +388,15 @@ function searchCrops() {
 
   const filtered =
     cropsData.filter(crop =>
+(crop.crop_name || "")
 
-      crop.crop_name
-      .toLowerCase()
+.toLowerCase()
       .includes(value)
 
       ||
 
-      crop.season
-      .toLowerCase()
+      (crop.season || "")
+.toLowerCase()
       .includes(value)
     );
 
@@ -426,21 +424,18 @@ function displayFiltered(data) {
         <button onclick="getProfit(${crop.id})">
           📊
         </button>
-
         <button onclick="loadChart(${crop.id})">
-          📈
-        </button>
+  📈
+</button>
 
-        <button onclick="
-          openEditModal(
-            ${crop.id},
-            '${crop.crop_name}',
-            '${crop.land_area}',
-            '${crop.season}'
-          )
-        ">
-          ✏️
-        </button>
+       <button onclick='openEditModal(
+  ${crop.id},
+  ${JSON.stringify(crop.crop_name)},
+  ${JSON.stringify(crop.land_area)},
+  ${JSON.stringify(crop.season)}
+)'>
+  ✏️
+</button>
 
         <button onclick="deleteCrop(${crop.id})">
           🗑️
@@ -706,7 +701,7 @@ function loadMonthlyChart() {
 
       data: {
 
-        labels: months,
+       labels: months.map(m => "Month " + parseInt(m)),
 
         datasets: [
 
@@ -782,25 +777,28 @@ function loadUser() {
 loadUser();
 
 // ================= BUTTON LOADING =================
-
 function setLoading(btn, loading) {
+
+  if (!btn) return;
 
   if (loading) {
 
     btn.disabled = true;
 
+    btn.dataset.originalText =
+      btn.innerHTML;
+
     btn.innerHTML =
-      '<span class="spinner-btn"></span>';
+      "Loading...";
 
   } else {
 
     btn.disabled = false;
 
     btn.innerHTML =
-      btn.getAttribute("data-text");
+      btn.dataset.originalText;
   }
 }
-
 // ================= DARK MODE =================
 
 function toggleDark() {
@@ -869,7 +867,12 @@ function loadExpenses() {
 
           <td>₹${exp.amount}</td>
 
-          <td>${exp.date}</td>
+          <td>
+  ${
+    new Date(exp.date)
+    .toLocaleDateString()
+  }
+</td>
 
         </tr>
 
@@ -938,10 +941,12 @@ function loadIncome() {
 
           <td>₹${inc.price_per_unit}</td>
 
-          <td>₹${inc.total_amount}</td>
-
-          <td>${inc.date}</td>
-
+          <td>₹${inc.total_amount}</td><td>
+  ${
+    new Date(inc.date)
+    .toLocaleDateString()
+  }
+</td>
         </tr>
 
       `;
