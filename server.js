@@ -329,7 +329,6 @@ app.post("/add-crop", verifyToken, (req, res) => {
 });
 
 // ================= ADD EXPENSE =================
-
 app.post("/add-expense", verifyToken, (req, res) => {
 
   const {
@@ -339,15 +338,18 @@ app.post("/add-expense", verifyToken, (req, res) => {
     date
   } = req.body;
 
+  const user_id = req.user.id;
+
   const sql = `
     INSERT INTO expenses
     (
       crop_id,
       type,
       amount,
-      date
+      date,
+      user_id
     )
-    VALUES (?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?)
   `;
 
   db.query(
@@ -358,7 +360,8 @@ app.post("/add-expense", verifyToken, (req, res) => {
       crop_id,
       type,
       amount,
-      date
+      date,
+      user_id
     ],
 
     (err, result) => {
@@ -383,34 +386,39 @@ app.post("/add-expense", verifyToken, (req, res) => {
 });
 
 // ================= GET EXPENSES =================
-
 app.get("/expenses", verifyToken, (req, res) => {
 
   const sql = `
     SELECT *
     FROM expenses
+    WHERE user_id = ?
     ORDER BY id DESC
   `;
 
-  db.query(sql, (err, result) => {
+  db.query(
 
-    if (err) {
+    sql,
 
-      console.log(err);
+    [req.user.id],
 
-      return res.status(500).json({
-        message:
-          "Failed to fetch expenses ❌"
-      });
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json({
+          message:
+            "Failed to fetch expenses ❌"
+        });
+      }
+
+      res.json(result);
+
     }
-
-    res.json(result);
-
-  });
+  );
 });
-
 // ================= ADD INCOME =================
-
 app.post("/add-income", verifyToken, (req, res) => {
 
   const {
@@ -423,6 +431,8 @@ app.post("/add-income", verifyToken, (req, res) => {
   const total_amount =
     quantity * price_per_unit;
 
+  const user_id = req.user.id;
+
   const sql = `
     INSERT INTO income
     (
@@ -430,9 +440,10 @@ app.post("/add-income", verifyToken, (req, res) => {
       quantity,
       price_per_unit,
       total_amount,
-      date
+      date,
+      user_id
     )
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
@@ -444,7 +455,8 @@ app.post("/add-income", verifyToken, (req, res) => {
       quantity,
       price_per_unit,
       total_amount,
-      date
+      date,
+      user_id
     ],
 
     (err, result) => {
@@ -469,38 +481,133 @@ app.post("/add-income", verifyToken, (req, res) => {
 });
 
 // ================= GET INCOME =================
-
 app.get("/income", verifyToken, (req, res) => {
 
   const sql = `
     SELECT *
     FROM income
+    WHERE user_id = ?
     ORDER BY id DESC
   `;
 
-  db.query(sql, (err, result) => {
+  db.query(
 
-    if (err) {
+    sql,
 
-      console.log(err);
+    [req.user.id],
 
-      return res.status(500).json({
-        message:
-          "Failed to fetch income ❌"
-      });
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json({
+          message:
+            "Failed to fetch income ❌"
+        });
+      }
+
+      res.json(result);
+
     }
-
-    res.json(result);
-
-  });
+  );
 });
 
-// ================= PROFIT =================
+// ================= MONTHLY STATS =================
+app.get(
+  "/monthly-stats/:crop_id",
+  verifyToken,
+
+  (req, res) => {
+
+    const cropId =
+      req.params.crop_id;
+
+    const userId =
+      req.user.id;
+
+    const incomeSql = `
+      SELECT
+        MONTH(date) AS month,
+        SUM(total_amount) AS income
+      FROM income
+      WHERE crop_id = ?
+      AND user_id = ?
+      GROUP BY MONTH(date)
+    `;
+
+    const expenseSql = `
+      SELECT
+        MONTH(date) AS month,
+        SUM(amount) AS expense
+      FROM expenses
+      WHERE crop_id = ?
+      AND user_id = ?
+      GROUP BY MONTH(date)
+    `;
+
+    db.query(
+
+      incomeSql,
+
+      [cropId, userId],
+
+      (err1, incomeData) => {
+
+        if (err1) {
+
+          console.log(err1);
+
+          return res.status(500).json({
+            message:
+              "Monthly income failed ❌"
+          });
+        }
+
+        db.query(
+
+          expenseSql,
+
+          [cropId, userId],
+
+          (err2, expenseData) => {
+
+            if (err2) {
+
+              console.log(err2);
+
+              return res.status(500).json({
+                message:
+                  "Monthly expense failed ❌"
+              });
+            }
+
+            res.json({
+
+              income: incomeData,
+
+              expense: expenseData
+
+            });
+
+          }
+        );
+
+      }
+    );
+  }
+);
+
+// profit
 
 app.get("/profit/:crop_id", verifyToken, (req, res) => {
 
   const cropId =
     req.params.crop_id;
+
+  const userId =
+    req.user.id;
 
   const incomeSql = `
     SELECT
@@ -508,6 +615,7 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
       AS totalIncome
     FROM income
     WHERE crop_id = ?
+    AND user_id = ?
   `;
 
   const expenseSql = `
@@ -516,11 +624,14 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
       AS totalExpense
     FROM expenses
     WHERE crop_id = ?
+    AND user_id = ?
   `;
 
   db.query(
+
     incomeSql,
-    [cropId],
+
+    [cropId, userId],
 
     (err1, incomeResult) => {
 
@@ -535,8 +646,10 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
       }
 
       db.query(
+
         expenseSql,
-        [cropId],
+
+        [cropId, userId],
 
         (err2, expenseResult) => {
 
@@ -579,83 +692,6 @@ app.get("/profit/:crop_id", verifyToken, (req, res) => {
     }
   );
 });
-
-// ================= MONTHLY STATS =================
-
-app.get(
-  "/monthly-stats/:crop_id",
-  verifyToken,
-
-  (req, res) => {
-
-    const cropId =
-      req.params.crop_id;
-
-    const incomeSql = `
-      SELECT
-        MONTH(date) AS month,
-        SUM(total_amount) AS income
-      FROM income
-      WHERE crop_id = ?
-      GROUP BY MONTH(date)
-    `;
-
-    const expenseSql = `
-      SELECT
-        MONTH(date) AS month,
-        SUM(amount) AS expense
-      FROM expenses
-      WHERE crop_id = ?
-      GROUP BY MONTH(date)
-    `;
-
-    db.query(
-      incomeSql,
-      [cropId],
-
-      (err1, incomeData) => {
-
-        if (err1) {
-
-          console.log(err1);
-
-          return res.status(500).json({
-            message:
-              "Monthly income failed ❌"
-          });
-        }
-
-        db.query(
-          expenseSql,
-          [cropId],
-
-          (err2, expenseData) => {
-
-            if (err2) {
-
-              console.log(err2);
-
-              return res.status(500).json({
-                message:
-                  "Monthly expense failed ❌"
-              });
-            }
-
-            res.json({
-
-              income: incomeData,
-
-              expense: expenseData
-
-            });
-
-          }
-        );
-
-      }
-    );
-  }
-);
 
 // ================= UPDATE CROP =================
 
