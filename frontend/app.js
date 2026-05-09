@@ -83,7 +83,7 @@ function loadCrops() {
   fetch(API + "/crops", {
 
     headers: {
-      "Authorization":  token
+     "Authorization": "Bearer " + token
     }
 
   })
@@ -933,4 +933,10 @@ function loadIncome() {
 }
 // ================= INIT =================
 
+// ================= INIT =================
+
 loadCrops();
+
+loadExpenses();
+
+loadIncome();
