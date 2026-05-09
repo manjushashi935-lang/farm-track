@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
-const mysql = require("mysql2");
+const { Pool } = require("pg");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -11,48 +11,33 @@ const app = express();
 // ================= MIDDLEWARE =================
 
 app.use(cors());
-
 app.use(express.json());
 
-// ================= MYSQL CONNECTION =================
+// ================= DATABASE =================
 
-const db = mysql.createConnection({
+const db = new Pool({
 
-  host: process.env.DB_HOST,
+  connectionString:
+    process.env.DATABASE_URL,
 
-  user: process.env.DB_USER,
-
-  password: process.env.DB_PASSWORD,
-
-  database: process.env.DB_NAME,
-
-  port: process.env.DB_PORT,
-
-  connectTimeout: 10000
+  ssl: {
+    rejectUnauthorized: false
+  }
 
 });
 
-console.log(
-  "Connecting to DB:",
-  process.env.DB_HOST,
-  process.env.DB_PORT
-);
-
-db.connect(err => {
-
-  if (err) {
-
+db.connect()
+  .then(() =>
+    console.log(
+      "PostgreSQL Connected ✅"
+    )
+  )
+  .catch(err =>
     console.log(
       "DB Connection Failed ❌",
       err
-    );
-
-  } else {
-
-    console.log("MySQL Connected ✅");
-
-  }
-});
+    )
+  );
 
 // ================= JWT VERIFY =================
 
@@ -84,7 +69,7 @@ function verifyToken(req, res, next) {
 
       token,
 
-      "farmtracksupersecret123"
+      process.env.JWT_SECRET
     );
 
     req.user = verified;
@@ -112,13 +97,13 @@ app.get("/", (req, res) => {
 
 app.post("/register", async (req, res) => {
 
-  const {
-    name,
-    email,
-    password
-  } = req.body;
-
   try {
+
+    const {
+      name,
+      email,
+      password
+    } = req.body;
 
     const hashedPassword =
       await bcrypt.hash(password, 10);
@@ -126,80 +111,60 @@ app.post("/register", async (req, res) => {
     const sql = `
       INSERT INTO users
       (name, email, password)
-      VALUES (?, ?, ?)
+      VALUES ($1, $2, $3)
     `;
 
-    db.query(
+    await db.query(sql, [
 
-      sql,
+      name,
+      email,
+      hashedPassword
 
-      [
-        name,
-        email,
-        hashedPassword
-      ],
+    ]);
 
-      (err, result) => {
-
-        if (err) {
-
-          console.log(err);
-
-          return res.status(500).json({
-            message:
-              "User already exists ❌"
-          });
-        }
-
-        res.json({
-          message:
-            "Registration successful 🎉"
-        });
-
-      }
-    );
+    res.json({
+      message:
+        "Registration successful 🎉"
+    });
 
   } catch (err) {
 
     console.log(err);
 
     res.status(500).json({
-      message: "Server error ❌"
+      message:
+        "User already exists ❌"
     });
   }
 });
 
 // ================= LOGIN =================
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
 
-  const {
-    email,
-    password
-  } = req.body;
+  try {
 
-  const sql =
-    "SELECT * FROM users WHERE email = ?";
+    const {
+      email,
+      password
+    } = req.body;
 
-  db.query(sql, [email], async (err, result) => {
+    const sql =
+      "SELECT * FROM users WHERE email = $1";
 
-    if (err) {
+    const result =
+      await db.query(sql, [email]);
 
-      console.log(err);
-
-      return res.status(500).json({
-        message: "Server error ❌"
-      });
-    }
-
-    if (result.length === 0) {
+    if (result.rows.length === 0) {
 
       return res.status(400).json({
-        message: "User not found ❌"
+        message:
+          "User not found ❌"
       });
     }
 
-    const user = result[0];
+    const user =
+      result.rows[0];
 
     const validPassword =
       await bcrypt.compare(
@@ -210,7 +175,8 @@ app.post("/login", (req, res) => {
     if (!validPassword) {
 
       return res.status(400).json({
-        message: "Wrong password ❌"
+        message:
+          "Wrong password ❌"
       });
     }
 
@@ -221,7 +187,7 @@ app.post("/login", (req, res) => {
         email: user.email
       },
 
-      "farmtracksupersecret123",
+      process.env.JWT_SECRET,
 
       {
         expiresIn: "7d"
@@ -237,289 +203,273 @@ app.post("/login", (req, res) => {
 
     });
 
-  });
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message:
+        "Server error ❌"
+    });
+  }
 });
 
 // ================= GET CROPS =================
 
-app.get("/crops", verifyToken, (req, res) => {
+app.get("/crops", verifyToken, async (req, res) => {
 
-  const sql = `
-    SELECT *
-    FROM crops
-    WHERE user_id = ?
-    ORDER BY id DESC
-  `;
+  try {
 
-  db.query(
+    const sql = `
+      SELECT *
+      FROM crops
+      WHERE user_id = $1
+      ORDER BY id DESC
+    `;
 
-    sql,
+    const result =
+      await db.query(
+        sql,
+        [req.user.id]
+      );
 
-    [req.user.id],
+    res.json(result.rows);
 
-    (err, result) => {
+  } catch (err) {
 
-      if (err) {
+    console.log(err);
 
-        console.log(err);
-
-        return res.status(500).json({
-          message:
-            "Failed to load crops ❌"
-        });
-      }
-
-      res.json(result);
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Failed to load crops ❌"
+    });
+  }
 });
 
 // ================= ADD CROP =================
 
-app.post("/add-crop", verifyToken, (req, res) => {
+app.post("/add-crop", verifyToken, async (req, res) => {
 
-  const {
-    crop_name,
-    land_area,
-    season
-  } = req.body;
+  try {
 
-  const sql = `
-    INSERT INTO crops
-    (
+    const {
       crop_name,
       land_area,
-      season,
-      user_id
-    )
-    VALUES (?, ?, ?, ?)
-  `;
+      season
+    } = req.body;
 
-  db.query(
+    const sql = `
+      INSERT INTO crops
+      (
+        crop_name,
+        land_area,
+        season,
+        user_id
+      )
+      VALUES ($1, $2, $3, $4)
+    `;
 
-    sql,
+    await db.query(sql, [
 
-    [
       crop_name,
       land_area,
       season,
       req.user.id
-    ],
 
-    (err, result) => {
+    ]);
 
-      if (err) {
+    res.json({
+      message:
+        "Crop added 🌾"
+    });
 
-        console.log(err);
+  } catch (err) {
 
-        return res.status(500).json({
-          message:
-            "Failed to add crop ❌"
-        });
-      }
+    console.log(err);
 
-      res.json({
-        message:
-          "Crop added successfully 🌾"
-      });
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Failed to add crop ❌"
+    });
+  }
 });
 
 // ================= ADD EXPENSE =================
-app.post("/add-expense", verifyToken, (req, res) => {
 
-  const {
-    crop_id,
-    type,
-    amount,
-    date
-  } = req.body;
+app.post("/add-expense", verifyToken, async (req, res) => {
 
-  const user_id = req.user.id;
+  try {
 
-  const sql = `
-    INSERT INTO expenses
-    (
+    const {
+      crop_id,
+      type,
+      amount,
+      date
+    } = req.body;
+
+    const sql = `
+      INSERT INTO expenses
+      (
+        crop_id,
+        type,
+        amount,
+        date,
+        user_id
+      )
+      VALUES ($1, $2, $3, $4, $5)
+    `;
+
+    await db.query(sql, [
+
       crop_id,
       type,
       amount,
       date,
-      user_id
-    )
-    VALUES (?, ?, ?, ?, ?)
-  `;
+      req.user.id
 
-  db.query(
+    ]);
 
-    sql,
+    res.json({
+      message:
+        "Expense added 💸"
+    });
 
-    [
-      crop_id,
-      type,
-      amount,
-      date,
-      user_id
-    ],
+  } catch (err) {
 
-    (err, result) => {
+    console.log(err);
 
-      if (err) {
-
-        console.log(err);
-
-        return res.status(500).json({
-          message:
-            "Expense add failed ❌"
-        });
-      }
-
-      res.json({
-        message:
-          "Expense added 💸"
-      });
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Expense add failed ❌"
+    });
+  }
 });
 
 // ================= GET EXPENSES =================
-app.get("/expenses", verifyToken, (req, res) => {
 
-  const sql = `
-    SELECT *
-    FROM expenses
-    WHERE user_id = ?
-    ORDER BY id DESC
-  `;
+app.get("/expenses", verifyToken, async (req, res) => {
 
-  db.query(
+  try {
 
-    sql,
+    const sql = `
+      SELECT *
+      FROM expenses
+      WHERE user_id = $1
+      ORDER BY id DESC
+    `;
 
-    [req.user.id],
+    const result =
+      await db.query(
+        sql,
+        [req.user.id]
+      );
 
-    (err, result) => {
+    res.json(result.rows);
 
-      if (err) {
+  } catch (err) {
 
-        console.log(err);
+    console.log(err);
 
-        return res.status(500).json({
-          message:
-            "Failed to fetch expenses ❌"
-        });
-      }
-
-      res.json(result);
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Failed to fetch expenses ❌"
+    });
+  }
 });
+
 // ================= ADD INCOME =================
-app.post("/add-income", verifyToken, (req, res) => {
 
-  const {
-    crop_id,
-    quantity,
-    price_per_unit,
-    date
-  } = req.body;
+app.post("/add-income", verifyToken, async (req, res) => {
 
-  const total_amount =
-    quantity * price_per_unit;
+  try {
 
-  const user_id = req.user.id;
+    const {
+      crop_id,
+      quantity,
+      price_per_unit,
+      date
+    } = req.body;
 
-  const sql = `
-    INSERT INTO income
-    (
+    const total_amount =
+      quantity * price_per_unit;
+
+    const sql = `
+      INSERT INTO income
+      (
+        crop_id,
+        quantity,
+        price_per_unit,
+        total_amount,
+        date,
+        user_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `;
+
+    await db.query(sql, [
+
       crop_id,
       quantity,
       price_per_unit,
       total_amount,
       date,
-      user_id
-    )
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
+      req.user.id
 
-  db.query(
+    ]);
 
-    sql,
+    res.json({
+      message:
+        "Income added 💰"
+    });
 
-    [
-      crop_id,
-      quantity,
-      price_per_unit,
-      total_amount,
-      date,
-      user_id
-    ],
+  } catch (err) {
 
-    (err, result) => {
+    console.log(err);
 
-      if (err) {
-
-        console.log(err);
-
-        return res.status(500).json({
-          message:
-            "Income add failed ❌"
-        });
-      }
-
-      res.json({
-        message:
-          "Income added 💰"
-      });
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Income add failed ❌"
+    });
+  }
 });
 
 // ================= GET INCOME =================
-app.get("/income", verifyToken, (req, res) => {
 
-  const sql = `
-    SELECT *
-    FROM income
-    WHERE user_id = ?
-    ORDER BY id DESC
-  `;
+app.get("/income", verifyToken, async (req, res) => {
 
-  db.query(
+  try {
 
-    sql,
+    const sql = `
+      SELECT *
+      FROM income
+      WHERE user_id = $1
+      ORDER BY id DESC
+    `;
 
-    [req.user.id],
+    const result =
+      await db.query(
+        sql,
+        [req.user.id]
+      );
 
-    (err, result) => {
+    res.json(result.rows);
 
-      if (err) {
+  } catch (err) {
 
-        console.log(err);
+    console.log(err);
 
-        return res.status(500).json({
-          message:
-            "Failed to fetch income ❌"
-        });
-      }
-
-      res.json(result);
-
-    }
-  );
+    res.status(500).json({
+      message:
+        "Failed to fetch income ❌"
+    });
+  }
 });
 
-// ================= MONTHLY STATS =================
-app.get(
-  "/monthly-stats/:crop_id",
-  verifyToken,
+// ================= PROFIT =================
 
-  (req, res) => {
+app.get("/profit/:crop_id", verifyToken, async (req, res) => {
+
+  try {
 
     const cropId =
       req.params.crop_id;
@@ -529,169 +479,157 @@ app.get(
 
     const incomeSql = `
       SELECT
-        MONTH(date) AS month,
-        SUM(total_amount) AS income
+        COALESCE(
+          SUM(total_amount), 0
+        ) AS total_income
       FROM income
-      WHERE crop_id = ?
-      AND user_id = ?
-      GROUP BY MONTH(date)
+      WHERE crop_id = $1
+      AND user_id = $2
     `;
 
     const expenseSql = `
       SELECT
-        MONTH(date) AS month,
-        SUM(amount) AS expense
+        COALESCE(
+          SUM(amount), 0
+        ) AS total_expense
       FROM expenses
-      WHERE crop_id = ?
-      AND user_id = ?
-      GROUP BY MONTH(date)
+      WHERE crop_id = $1
+      AND user_id = $2
     `;
 
-    db.query(
-
-      incomeSql,
-
-      [cropId, userId],
-
-      (err1, incomeData) => {
-
-        if (err1) {
-
-          console.log(err1);
-
-          return res.status(500).json({
-            message:
-              "Monthly income failed ❌"
-          });
-        }
-
-        db.query(
-
-          expenseSql,
-
-          [cropId, userId],
-
-          (err2, expenseData) => {
-
-            if (err2) {
-
-              console.log(err2);
-
-              return res.status(500).json({
-                message:
-                  "Monthly expense failed ❌"
-              });
-            }
-
-            res.json({
-
-              income: incomeData,
-
-              expense: expenseData
-
-            });
-
-          }
-        );
-
-      }
-    );
-  }
-);
-
-// profit
-
-app.get("/profit/:crop_id", verifyToken, (req, res) => {
-
-  const cropId =
-    req.params.crop_id;
-
-  const userId =
-    req.user.id;
-
-  const incomeSql = `
-    SELECT
-      SUM(total_amount)
-      AS totalIncome
-    FROM income
-    WHERE crop_id = ?
-    AND user_id = ?
-  `;
-
-  const expenseSql = `
-    SELECT
-      SUM(amount)
-      AS totalExpense
-    FROM expenses
-    WHERE crop_id = ?
-    AND user_id = ?
-  `;
-
-  db.query(
-
-    incomeSql,
-
-    [cropId, userId],
-
-    (err1, incomeResult) => {
-
-      if (err1) {
-
-        console.log(err1);
-
-        return res.status(500).json({
-          message:
-            "Income fetch failed ❌"
-        });
-      }
-
-      db.query(
-
-        expenseSql,
-
-        [cropId, userId],
-
-        (err2, expenseResult) => {
-
-          if (err2) {
-
-            console.log(err2);
-
-            return res.status(500).json({
-              message:
-                "Expense fetch failed ❌"
-            });
-          }
-
-          const totalIncome = Number(
-            incomeResult[0].totalIncome || 0
-          );
-
-          const totalExpense = Number(
-            expenseResult[0].totalExpense || 0
-          );
-
-          const profit =
-            totalIncome - totalExpense;
-
-          res.json({
-
-            total_income:
-              totalIncome,
-
-            total_expense:
-              totalExpense,
-
-            profit
-
-          });
-
-        }
+    const incomeResult =
+      await db.query(
+        incomeSql,
+        [cropId, userId]
       );
 
-    }
-  );
+    const expenseResult =
+      await db.query(
+        expenseSql,
+        [cropId, userId]
+      );
+
+    const totalIncome =
+      Number(
+        incomeResult.rows[0]
+          .total_income
+      );
+
+    const totalExpense =
+      Number(
+        expenseResult.rows[0]
+          .total_expense
+      );
+
+    const profit =
+      totalIncome - totalExpense;
+
+    res.json({
+
+      total_income:
+        totalIncome,
+
+      total_expense:
+        totalExpense,
+
+      profit
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message:
+        "Profit calculation failed ❌"
+    });
+  }
 });
+
+// ================= MONTHLY STATS =================
+
+app.get(
+  "/monthly-stats/:crop_id",
+  verifyToken,
+
+  async (req, res) => {
+
+    try {
+
+      const cropId =
+        req.params.crop_id;
+
+      const userId =
+        req.user.id;
+
+      const incomeSql = `
+        SELECT
+          EXTRACT(MONTH FROM date)
+          AS month,
+
+          SUM(total_amount)
+          AS income
+
+        FROM income
+
+        WHERE crop_id = $1
+        AND user_id = $2
+
+        GROUP BY month
+        ORDER BY month
+      `;
+
+      const expenseSql = `
+        SELECT
+          EXTRACT(MONTH FROM date)
+          AS month,
+
+          SUM(amount)
+          AS expense
+
+        FROM expenses
+
+        WHERE crop_id = $1
+        AND user_id = $2
+
+        GROUP BY month
+        ORDER BY month
+      `;
+
+      const incomeData =
+        await db.query(
+          incomeSql,
+          [cropId, userId]
+        );
+
+      const expenseData =
+        await db.query(
+          expenseSql,
+          [cropId, userId]
+        );
+
+      res.json({
+
+        income:
+          incomeData.rows,
+
+        expense:
+          expenseData.rows
+
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+        message:
+          "Monthly stats failed ❌"
+      });
+    }
+  }
+);
 
 // ================= UPDATE CROP =================
 
@@ -699,56 +637,54 @@ app.put(
   "/update-crop/:id",
   verifyToken,
 
-  (req, res) => {
+  async (req, res) => {
 
-    const cropId =
-      req.params.id;
+    try {
 
-    const {
-      crop_name,
-      land_area,
-      season
-    } = req.body;
+      const cropId =
+        req.params.id;
 
-    const sql = `
-      UPDATE crops
-      SET
-        crop_name = ?,
-        land_area = ?,
-        season = ?
-      WHERE id = ?
-    `;
+      const {
+        crop_name,
+        land_area,
+        season
+      } = req.body;
 
-    db.query(
+      const sql = `
+        UPDATE crops
 
-      sql,
+        SET
 
-      [
+          crop_name = $1,
+          land_area = $2,
+          season = $3
+
+        WHERE id = $4
+      `;
+
+      await db.query(sql, [
+
         crop_name,
         land_area,
         season,
         cropId
-      ],
 
-      (err, result) => {
+      ]);
 
-        if (err) {
+      res.json({
+        message:
+          "Crop updated ✏️"
+      });
 
-          console.log(err);
+    } catch (err) {
 
-          return res.status(500).json({
-            message:
-              "Update failed ❌"
-          });
-        }
+      console.log(err);
 
-        res.json({
-          message:
-            "Crop updated ✏️"
-        });
-
-      }
-    );
+      res.status(500).json({
+        message:
+          "Update failed ❌"
+      });
+    }
   }
 );
 
@@ -758,37 +694,32 @@ app.delete(
   "/delete-crop/:id",
   verifyToken,
 
-  (req, res) => {
+  async (req, res) => {
 
-    const cropId =
-      req.params.id;
+    try {
 
-    const sql =
-      "DELETE FROM crops WHERE id = ?";
+      const cropId =
+        req.params.id;
 
-    db.query(
-      sql,
-      [cropId],
+      const sql =
+        "DELETE FROM crops WHERE id = $1";
 
-      (err, result) => {
+      await db.query(sql, [cropId]);
 
-        if (err) {
+      res.json({
+        message:
+          "Crop deleted 🗑️"
+      });
 
-          console.log(err);
+    } catch (err) {
 
-          return res.status(500).json({
-            message:
-              "Delete failed ❌"
-          });
-        }
+      console.log(err);
 
-        res.json({
-          message:
-            "Crop deleted 🗑️"
-        });
-
-      }
-    );
+      res.status(500).json({
+        message:
+          "Delete failed ❌"
+      });
+    }
   }
 );
 
